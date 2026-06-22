@@ -1,9 +1,18 @@
 import React, { use, useEffect, useRef, useState } from "react";
+import BoardCell from "./BoardCell";
+import GameOver from "./GameOver";
 
 const blockSize = 30;
 
-const Board = () => {
+const Board = ({ score, setScore, highScore, setHighScore }) => {
   const boardRef = useRef(null);
+
+  const calculateHS = () => {
+    if (score > highScore) {
+      localStorage.setItem("highScore", score);
+      setHighScore(score); // Forces a safe re-render across your app
+    }
+  };
 
   const [rows, setRows] = useState(0);
   const [cols, setCols] = useState(0);
@@ -13,6 +22,8 @@ const Board = () => {
   const directionRef = useRef("right");
 
   const [food, setFood] = useState(null);
+
+  const [isGameOver, setIsGameOver] = useState(false);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -36,37 +47,11 @@ const Board = () => {
     };
   }, []);
 
-  let cells = [];
-
-  for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < cols; j++) {
-      let isSnake = snake.some(
-        (segment) => segment.row === i && segment.col === j,
-      );
-
-      let isFood = food && food.row === i && food.col === j;
-
-      let elem = (
-        <div
-          key={`${i}-${j}`}
-          style={{
-            backgroundColor: isSnake
-              ? "limegreen"
-              : isFood
-                ? "red"
-                : "transparent",
-            border: "1px solid #333333",
-            width: `${blockSize}px`,
-            height: `${blockSize}px`,
-          }}
-        ></div>
-      );
-
-      cells.push(elem);
-    }
-  }
-
   useEffect(() => {
+    if (isGameOver) {
+      return;
+    }
+
     if (rows === 0 || cols === 0 || !food) return;
 
     const intervalId = setInterval(() => {
@@ -85,9 +70,29 @@ const Board = () => {
           head = { row: prev[0].row, col: prev[0].col - 1 };
         }
 
+        if (
+          head.row < 0 ||
+          head.col < 0 ||
+          head.row >= rows ||
+          head.col >= cols
+        ) {
+          setIsGameOver(true);
+          return prev;
+        }
+
+        let snakeBites = prev.some(
+          (segment) => segment.row === head.row && segment.col === head.col,
+        );
+
+        if (snakeBites) {
+          setIsGameOver(true);
+          return prev;
+        }
+
         let newSnake = [head, ...prev];
 
         if (head.row === food.row && head.col === food.col) {
+          setScore((prev) => prev + 1);
           setFood(null);
           spawnFood(rows, cols, newSnake);
         } else {
@@ -101,7 +106,7 @@ const Board = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [rows, cols, food]);
+  }, [rows, cols, food, isGameOver]);
 
   useEffect(() => {
     const handleKey = (dets) => {
@@ -150,17 +155,58 @@ const Board = () => {
     }
   }, [rows, cols, food]);
 
+  const renderCells = () => {
+    const cells = [];
+
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        let isSnake = snake.some(
+          (segment) => segment.row === i && segment.col === j,
+        );
+
+        let isFood = food && food.row === i && food.col === j;
+
+        cells.push(
+          <BoardCell
+            key={`${i}-${j}`}
+            isSnake={isSnake}
+            isFood={isFood}
+            blockSize={blockSize}
+          />,
+        );
+      }
+    }
+
+    return cells;
+  };
+
+  useEffect(() => {
+    if (isGameOver) calculateHS();
+  }, [isGameOver]);
+
+  const restartGame = () => {
+    setSnake([{ row: 1, col: 3 }]);
+    setFood(null);
+    setIsGameOver(false);
+    directionRef.current = "right";
+    setScore(0);
+  };
+
   return (
-    <div
-      ref={boardRef}
-      style={{
-        border: "1px solid #333333",
-        display: "grid",
-        gridTemplateColumns: `repeat(${cols}, ${blockSize}px)`,
-      }}
-      className="w-full grow"
-    >
-      {cells}
+    <div className="relative w-full h-full">
+      <div
+        ref={boardRef}
+        style={{
+          border: "1px solid #333333",
+          display: "grid",
+          gridTemplateColumns: `repeat(${cols}, ${blockSize}px)`,
+        }}
+        className="w-full h-full"
+      >
+        {renderCells()}
+      </div>
+
+      {isGameOver && <GameOver score={score} restartGame={restartGame} />}
     </div>
   );
 };

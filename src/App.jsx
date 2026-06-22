@@ -1,13 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import Board from "./components/Board";
+import Navbar from "./components/Navbar";
 
 const App = () => {
+  const [score, setScore] = useState(0);
+
+  const [highScore, setHighScore] = useState(
+    parseInt(localStorage.getItem("highScore")),
+  );
+
   return (
     <div className="flex flex-col gap-2 items-center p-2 bg-black h-screen overflow-hidden w-full text-white">
-      <h1 className="text-xl font-bold">Snake Game</h1>
-      <h3 className="text-lg font-semibold">Score: 0</h3>
-
-      <Board />
+      <Navbar score={score} highScore={highScore} />
+      <Board
+        score={score}
+        setScore={setScore}
+        highScore={highScore}
+        setHighScore={setHighScore}
+      />
     </div>
   );
 };
