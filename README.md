@@ -46,20 +46,6 @@ npm run dev
 npm run build
 ```
 
-## 📸 Screenshots
-
-Screenshots will be added after the project is completed.
-
-## 🎯 Learning Objectives
-
-- React Components
-- React Hooks
-- State Management
-- Event Handling
-- Game Loop Logic
-- Local Storage
-- Responsive Design
-
 ## 👨‍💻 Author
 
 Mihir Sondagar
