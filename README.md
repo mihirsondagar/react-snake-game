@@ -8,7 +8,7 @@ This project recreates the classic Snake Game using React. The goal is to contro
 
 This project is being built to strengthen React development skills, state management, keyboard event handling, and game logic implementation.
 
-## ✨ Planned Features
+## ✨ Features
 
 - Snake movement using keyboard controls
 - Food generation
