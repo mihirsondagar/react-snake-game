@@ -1,6 +1,7 @@
-import React, { use, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import BoardCell from "./BoardCell";
 import GameOver from "./GameOver";
+import GameWin from "./GameWin";
 
 const blockSize = 30;
 
@@ -10,20 +11,21 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
   const calculateHS = () => {
     if (score > highScore) {
       localStorage.setItem("highScore", score);
-      setHighScore(score); // Forces a safe re-render across your app
+      setHighScore(score);
     }
   };
 
   const [rows, setRows] = useState(0);
   const [cols, setCols] = useState(0);
 
-  const [snake, setSnake] = useState([{ row: 1, col: 3 }]);
+  const [snake, setSnake] = useState([{ row: 0, col: 0 }]);
 
   const directionRef = useRef("right");
 
   const [food, setFood] = useState(null);
 
   const [isGameOver, setIsGameOver] = useState(false);
+  const [isWinner, setIsWinner] = useState(false);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -49,6 +51,10 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
 
   useEffect(() => {
     if (isGameOver) {
+      return;
+    }
+
+    if (isWinner) {
       return;
     }
 
@@ -106,7 +112,7 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [rows, cols, food, isGameOver]);
+  }, [rows, cols, food, isGameOver, isWinner]);
 
   useEffect(() => {
     const handleKey = (dets) => {
@@ -130,12 +136,17 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
     return () => {
       window.removeEventListener("keydown", handleKey);
     };
-  }, [directionRef.current]);
+  }, []);
 
   const spawnFood = (currRows, currCols, currSnake) => {
     let foodRow, foodCol;
 
     let isOnSnake = true;
+
+    if (snake.length === rows * cols) {
+      setIsWinner(true);
+      return;
+    }
 
     while (isOnSnake) {
       foodRow = Math.floor(Math.random() * currRows);
@@ -171,6 +182,9 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
             key={`${i}-${j}`}
             isSnake={isSnake}
             isFood={isFood}
+            isHead={
+              snake.length > 0 && snake[0].row === i && snake[0].col === j
+            }
             blockSize={blockSize}
           />,
         );
@@ -185,28 +199,30 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
   }, [isGameOver]);
 
   const restartGame = () => {
-    setSnake([{ row: 1, col: 3 }]);
+    setSnake([{ row: 0, col: 0 }]);
     setFood(null);
     setIsGameOver(false);
+    setIsWinner(false);
     directionRef.current = "right";
     setScore(0);
   };
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative flex justify-center items-center">
       <div
         ref={boardRef}
         style={{
-          border: "1px solid #333333",
           display: "grid",
           gridTemplateColumns: `repeat(${cols}, ${blockSize}px)`,
         }}
-        className="w-full h-full"
+        className="h-full w-full"
       >
         {renderCells()}
       </div>
 
       {isGameOver && <GameOver score={score} restartGame={restartGame} />}
+
+      {isWinner && <GameWin score={score} restartGame={restartGame} />}
     </div>
   );
 };
