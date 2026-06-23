@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import BoardCell from "./BoardCell";
 import GameOver from "./GameOver";
 import GameWin from "./GameWin";
+import PausePage from "./PausePage";
 
 const blockSize = 30;
 
@@ -14,6 +15,8 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
       setHighScore(score);
     }
   };
+
+  const [isPause, setIsPause] = useState(false);
 
   const [rows, setRows] = useState(0);
   const [cols, setCols] = useState(0);
@@ -55,6 +58,10 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
     }
 
     if (isWinner) {
+      return;
+    }
+
+    if (isPause) {
       return;
     }
 
@@ -112,10 +119,15 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [rows, cols, food, isGameOver, isWinner]);
+  }, [rows, cols, food, isGameOver, isWinner, isPause]);
 
   useEffect(() => {
     const handleKey = (dets) => {
+      if (dets.key === "Space" || dets.key === "Escape") {
+        setIsPause((prev) => !prev);
+        return;
+      }
+
       let direction = directionRef.current;
 
       if (direction === "right" || direction === "left") {
@@ -137,6 +149,8 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
       window.removeEventListener("keydown", handleKey);
     };
   }, []);
+
+  useEffect(() => {}, []);
 
   const spawnFood = (currRows, currCols, currSnake) => {
     let foodRow, foodCol;
@@ -203,12 +217,17 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
     setFood(null);
     setIsGameOver(false);
     setIsWinner(false);
+    setIsPause(false);
     directionRef.current = "right";
     setScore(0);
   };
 
+  const resumeGame = () => {
+    setIsPause((prev) => !prev);
+  };
+
   return (
-    <div className="relative flex justify-center items-center">
+    <div className="relative w-full h-full">
       <div
         ref={boardRef}
         style={{
@@ -219,6 +238,14 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
       >
         {renderCells()}
       </div>
+
+      {isPause && (
+        <PausePage
+          score={score}
+          resumeGame={resumeGame}
+          restartGame={restartGame}
+        />
+      )}
 
       {isGameOver && <GameOver score={score} restartGame={restartGame} />}
 
