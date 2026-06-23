@@ -123,7 +123,7 @@ const Board = ({ score, setScore, highScore, setHighScore }) => {
 
   useEffect(() => {
     const handleKey = (dets) => {
-      if (dets.key === "Space" || dets.key === "Escape") {
+      if (dets.key === " " || dets.key === "Escape") {
         setIsPause((prev) => !prev);
         return;
       }
